@@ -503,6 +503,9 @@ function renderPayment() {
   $("doneNumbers").textContent = order.numeros.join(", ");
   $("expiredCode").textContent = orderCode(order);
 
+  $("newOrderBtn").hidden = false;
+  checkoutView.after(paymentView);
+
   const hasPayload = !!order.payload;
   $("pixCode").value = order.payload || "";
   $("pixCodeArea").classList.toggle("hidden", !hasPayload);
@@ -513,16 +516,37 @@ function renderPayment() {
   updatePaymentState();
 }
 
+// Pedido pago, cancelado ou expirado: mostra o aviso no topo e devolve a grade de números
+function finishOrder(state) {
+  $("paymentPending").classList.add("hidden");
+  $("paymentDone").classList.toggle("hidden", state !== "paid");
+  $("paymentExpired").classList.toggle("hidden", state !== "expired");
+  $("newOrderBtn").hidden = true;
+
+  // O aviso aparece uma vez; na próxima visita a página abre direto na grade
+  saveOrder(null);
+  currentOrder = null;
+
+  setView("shop");
+  shopView.before(paymentView);
+  paymentView.classList.remove("hidden");
+}
+
 function updatePaymentState() {
   if (!currentOrder || currentView !== "payment") return;
 
   const state = getOrderState(currentOrder);
 
-  $("paymentPending").classList.toggle("hidden", state !== "pending");
-  $("paymentDone").classList.toggle("hidden", state !== "paid");
-  $("paymentExpired").classList.toggle("hidden", state !== "expired");
+  if (state !== "pending") {
+    finishOrder(state);
+    return;
+  }
 
-  if (state === "pending") {
+  $("paymentPending").classList.remove("hidden");
+  $("paymentDone").classList.add("hidden");
+  $("paymentExpired").classList.add("hidden");
+
+  {
     const remaining = Math.max(0, currentOrder.expiraEm - Date.now());
     const minutes = Math.floor(remaining / 60000);
     const seconds = Math.floor((remaining % 60000) / 1000);
