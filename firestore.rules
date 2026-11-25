@@ -1,0 +1,73 @@
+rules_version = '2';
+
+// Regras da rifa "Viagem para São Francisco".
+// Publicar: Console do Firebase > Firestore > Regras (colar este arquivo)
+// ou `firebase deploy --only firestore:rules`.
+// "Admin" = qualquer usuário logado no Firebase Authentication. Mantenha lá só contas de administrador.
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isAdmin() {
+      return request.auth != null;
+    }
+
+    // Um documento por número (ID = número). Público, sem dados pessoais.
+    match /rifa_sao_francisco/{numero} {
+      function validReservation() {
+        let d = request.resource.data;
+        return d.keys().hasOnly(['numero', 'pedidoId', 'status', 'criadoEm', 'expiraEm'])
+          && d.numero is int
+          && d.numero >= 1 && d.numero <= 100
+          && numero == string(d.numero)
+          && d.status == 'reservado'
+          && d.expiraEm is timestamp
+          && d.expiraEm > request.time
+          && d.expiraEm <= request.time + duration.value(25, 'h')
+          // O pedido precisa ser criado na mesma transação
+          && existsAfter(/databases/$(database)/documents/rifa_sao_francisco_pedidos/$(d.pedidoId));
+      }
+
+      allow read: if true;
+      allow create: if isAdmin() || validReservation();
+      // Visitante só reaproveita número com reserva vencida e não paga
+      allow update: if isAdmin()
+        || (resource.data.status == 'reservado'
+            && resource.data.expiraEm < request.time
+            && validReservation());
+      allow delete: if isAdmin();
+    }
+
+    // Pedidos (dados do participante): visitante só cria; admin lê e altera.
+    match /rifa_sao_francisco_pedidos/{pedidoId} {
+      allow create: if request.resource.data.status == 'pendente'
+        && request.resource.data.numeros is list
+        && request.resource.data.numeros.size() >= 1
+        && request.resource.data.numeros.size() <= 100
+        && request.resource.data.quantidade == request.resource.data.numeros.size()
+        && request.resource.data.valorTotal == request.resource.data.numeros.size() * request.resource.data.valorUnitario
+        && request.resource.data.valorUnitario == 15
+        && request.resource.data.nome is string
+        && request.resource.data.nome.size() >= 2 && request.resource.data.nome.size() <= 120
+        && request.resource.data.telefone is string
+        && request.resource.data.telefone.size() >= 10 && request.resource.data.telefone.size() <= 30;
+      allow read, update, delete: if isAdmin();
+    }
+
+    // Histórico de WhatsApp: só o backend (Cloud Functions) escreve
+    match /rifa_sao_francisco_notificacoes/{id} {
+      allow read: if isAdmin();
+      allow write: if false;
+    }
+
+    // Configurações do painel (telefone de destino, tipos de aviso)
+    match /rifa_config/{id} {
+      allow read, write: if isAdmin();
+    }
+
+    // Rifa anterior: só o admin lê (backup) e apaga
+    match /rifa_alunos/{id} {
+      allow read, delete: if isAdmin();
+    }
+  }
+}

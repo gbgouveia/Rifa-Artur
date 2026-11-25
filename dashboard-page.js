@@ -1,18 +1,27 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js";
 import {
   getFirestore,
+  connectFirestoreEmulator,
   collection,
   query,
   orderBy,
   onSnapshot
 } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
 
-import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-auth.js";
+import { getAuth, connectAuthEmulator, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-auth.js";
 
 import {
   firebaseConfig,
+  USE_EMULATOR,
   TOTAL_NUMBERS,
-  COLLECTION_NAME
+  COLLECTION_NAME,
+  ORDERS_COLLECTION_NAME,
+  ORDER_PENDING,
+  ORDER_PAID,
+  toDate,
+  buildNumberStatusMap,
+  countNumbers,
+  escapeHtml
 } from "./firebase-config.js";
 
 import { buildDashboard, clearDashboard } from "./dashboard.js";
@@ -20,6 +29,7 @@ import { buildDashboard, clearDashboard } from "./dashboard.js";
 const dashTotal = document.getElementById("dashTotal");
 const dashReserved = document.getElementById("dashReserved");
 const dashAvailable = document.getElementById("dashAvailable");
+const dashSold = document.getElementById("dashSold");
 
 const searchInput = document.getElementById("searchInput");
 const orderFilter = document.getElementById("orderFilter");
@@ -34,7 +44,9 @@ const dashboardMessage = document.getElementById("dashboardMessage");
 
 let db = null;
 let auth = null;
-let participantsRef = null;
+let numbersRef = null;
+let ordersRef = null;
+let numberDocs = [];
 let participants = [];
 
 let currentSearch = "";
@@ -61,26 +73,41 @@ function normalizeText(value) {
 }
 
 function getCreatedAtDate(item) {
-  if (!item?.criadoEm) return null;
-
-  if (typeof item.criadoEm.toDate === "function") {
-    return item.criadoEm.toDate();
-  }
-
-  if (item.criadoEm.seconds) {
-    return new Date(item.criadoEm.seconds * 1000);
-  }
-
-  return null;
+  return toDate(item?.criadoEm);
 }
 
 function updateCounters() {
-  const reserved = participants.length;
-  const available = TOTAL_NUMBERS - reserved;
+  const counts = countNumbers(buildNumberStatusMap(numberDocs, TOTAL_NUMBERS), TOTAL_NUMBERS);
 
-  dashTotal.textContent = TOTAL_NUMBERS;
-  dashReserved.textContent = reserved;
-  dashAvailable.textContent = available;
+  dashTotal.textContent = counts.total;
+  dashReserved.textContent = counts.reserved;
+  dashSold.textContent = counts.sold;
+  dashAvailable.textContent = counts.available;
+}
+
+// Um item por número de pedido ativo (pago ou aguardando dentro do prazo)
+function participantsFromOrders(orders) {
+  const now = Date.now();
+  const list = [];
+
+  orders.forEach((order) => {
+    const expiresAt = toDate(order.expiraEm);
+    const activePending = order.status === ORDER_PENDING && (!expiresAt || expiresAt.getTime() > now);
+    if (order.status !== ORDER_PAID && !activePending) return;
+
+    (order.numeros || []).forEach((numero) => {
+      list.push({
+        id: `${order.id}_${numero}`,
+        nome: order.nome,
+        telefone: order.telefone,
+        numero: Number(numero),
+        indicacao: order.indicacao,
+        criadoEm: order.criadoEm
+      });
+    });
+  });
+
+  return list;
 }
 
 function buildStartDateTime() {
@@ -185,12 +212,12 @@ function renderRankingList() {
 
   ranking.forEach((item, index) => {
     const card = document.createElement("div");
-    card.className = "participant-card";
+    card.className = "participant-card ranking";
 
     card.innerHTML = `
       <div class="participant-content">
         <p><strong>#${index + 1}</strong></p>
-        <p><strong>Vendedor / Indicação:</strong> ${item.nome}</p>
+        <p><strong>Vendedor / Indicação:</strong> ${escapeHtml(item.nome)}</p>
         <p><strong>Total vendido:</strong> <span class="number-pill">${item.total}</span></p>
       </div>
     `;
@@ -208,21 +235,33 @@ function initFirebase() {
   const app = initializeApp(firebaseConfig);
   db = getFirestore(app);
   auth = getAuth(app);
-  participantsRef = collection(db, COLLECTION_NAME);
+
+  if (USE_EMULATOR) {
+    connectFirestoreEmulator(db, "127.0.0.1", 8080);
+    connectAuthEmulator(auth, "http://127.0.0.1:9099", { disableWarnings: true });
+  }
+  numbersRef = collection(db, COLLECTION_NAME);
+  ordersRef = collection(db, ORDERS_COLLECTION_NAME);
 }
 
 function listenParticipants() {
-  const q = query(participantsRef, orderBy("numero", "asc"));
+  onSnapshot(
+    query(numbersRef, orderBy("numero", "asc")),
+    (snapshot) => {
+      numberDocs = snapshot.docs.map((docItem) => ({ id: docItem.id, ...docItem.data() }));
+      updateCounters();
+    },
+    (error) => {
+      console.error(error);
+      showMessage("Erro ao carregar os números.", "error");
+    }
+  );
 
   onSnapshot(
-    q,
+    query(ordersRef, orderBy("criadoEm", "desc")),
     (snapshot) => {
-      participants = snapshot.docs.map((docItem) => ({
-        id: docItem.id,
-        ...docItem.data()
-      }));
-
-      updateCounters();
+      const orders = snapshot.docs.map((docItem) => ({ id: docItem.id, ...docItem.data() }));
+      participants = participantsFromOrders(orders);
       updateDashboardPage();
     },
     (error) => {
@@ -269,7 +308,7 @@ function start() {
   onAuthStateChanged(auth, (user) => {
     if (!user) {
       clearDashboard();
-      window.location.href = "admin.html";
+      window.location.href = `admin.html${window.location.search}`;
       return;
     }
 

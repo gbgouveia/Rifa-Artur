@@ -2,104 +2,242 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Cadastro da Rifa</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#0a0a0a" />
+  <title>Rifa · Viagem para São Francisco</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@1,700;1,800&family=Barlow:wght@400;600;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="style.css" />
 </head>
 <body class="student-body">
   <main class="student-page">
 
-    <div style="display: flex; justify-content: flex-end; margin-bottom: 10px;">
-      <a href="admin.html" class="btn btn-light">Área do Admin</a>
+    <div class="topbar">
+      <span class="brand">Rifa <span>·</span> São Francisco</span>
+      <a href="admin.html" class="btn btn-light btn-sm">Área do Admin</a>
     </div>
 
     <section class="student-hero card">
-      <div>
-        <span class="badge gold">Cadastro dos alunos</span>
-        <h1>Escolha seus números e faça seu cadastro</h1>
-        <p class="muted">
-          Agora você pode selecionar vários números de uma vez.
-        </p>
+      <p class="hero-eyebrow">Ajude na minha viagem de <strong>São Francisco</strong></p>
+      <h1 class="hero-title">Rifa</h1>
+      <p class="hero-prize">Concorra a <strong id="prizeValue">R$ 100,00</strong></p>
+
+      <div class="hero-info">
+        <div class="info-box price">
+          <small>Cada número por apenas</small>
+          <strong id="priceValue">R$ 15,00</strong>
+        </div>
+
+        <div class="info-box">
+          <small>Pagamento</small>
+          <strong>PIX</strong>
+        </div>
       </div>
 
-      <div class="stats-grid">
-        <div class="stat-card">
-          <small>Total</small>
-          <strong id="studentTotal">200</strong>
-        </div>
-        <div class="stat-card">
-          <small>Reservados</small>
-          <strong id="studentReserved">0</strong>
-        </div>
-        <div class="stat-card dark">
-          <small>Disponíveis</small>
-          <strong id="studentAvailable">200</strong>
-        </div>
+      <p class="hero-footer">Boa sorte a todos! <strong>Vamos realizar essa viagem!</strong></p>
+    </section>
+
+    <section class="stats-grid" aria-label="Situação dos números">
+      <div class="stat-card">
+        <small>Total</small>
+        <strong id="studentTotal">100</strong>
+      </div>
+      <div class="stat-card available">
+        <small>Disponíveis</small>
+        <strong id="studentAvailable">100</strong>
+      </div>
+      <div class="stat-card reserved">
+        <small>Reservados</small>
+        <strong id="studentReserved">0</strong>
+      </div>
+      <div class="stat-card sold">
+        <small>Vendidos</small>
+        <strong id="studentSold">0</strong>
       </div>
     </section>
 
-    <section class="card">
-      <div class="section-top wrap">
-        <div>
-          <h2>Números da rifa</h2>
-          <p class="muted">Escuro = reservado | Azul = selecionado</p>
+    <ol class="stepper" aria-label="Etapas da compra">
+      <li data-step="shop" class="active"><span>1</span> Números</li>
+      <li data-step="checkout"><span>2</span> Seus dados</li>
+      <li data-step="payment"><span>3</span> Pagamento</li>
+    </ol>
+
+    <!-- Etapa 1: grade + carrinho -->
+    <div id="shopView" class="shop-layout">
+      <section class="card" id="numbersSection">
+        <div class="section-top wrap">
+          <div>
+            <h2>Escolha seus números</h2>
+            <p class="muted">Toque em um número para colocar no carrinho. Toque de novo para tirar.</p>
+          </div>
+
+          <div class="filters">
+            <button class="btn btn-dark student-filter active" data-filter="todos" type="button">Todos</button>
+            <button class="btn btn-light student-filter" data-filter="disponiveis" type="button">Disponíveis</button>
+            <button class="btn btn-light student-filter" data-filter="reservados" type="button">Indisponíveis</button>
+          </div>
         </div>
 
-        <div class="filters">
-          <button class="btn btn-dark student-filter active" data-filter="todos" type="button">Todos</button>
-          <button class="btn btn-light student-filter" data-filter="disponiveis" type="button">Disponíveis</button>
-          <button class="btn btn-light student-filter" data-filter="reservados" type="button">Reservados</button>
+        <div class="legend">
+          <span><i class="legend-box available"></i> Disponível</span>
+          <span><i class="legend-box selected"></i> No carrinho</span>
+          <span><i class="legend-box reserved"></i> Reservado</span>
+          <span><i class="legend-box sold"></i> Vendido</span>
         </div>
-      </div>
 
-      <div class="legend">
-        <span><i class="legend-box available"></i> Disponível</span>
-        <span><i class="legend-box selected"></i> Selecionado</span>
-        <span><i class="legend-box reserved"></i> Reservado</span>
-      </div>
+        <div id="studentNumbersGrid" class="numbers-grid" aria-label="Números da rifa"></div>
+      </section>
 
-      <div id="studentNumbersGrid" class="numbers-grid"></div>
-    </section>
+      <aside class="card cart" id="cartSection" aria-labelledby="cartTitle">
+        <div class="cart-head">
+          <h2 id="cartTitle">Carrinho</h2>
+          <span id="cartCountBadge" class="badge red">0</span>
+        </div>
 
-    <section class="card">
+        <ul id="cartList" class="cart-list"></ul>
+        <div id="cartEmpty" class="empty-box">Seu carrinho está vazio. Escolha seus números na tabela.</div>
+
+        <dl class="cart-summary">
+          <div><dt>Quantidade</dt><dd id="cartQty">0</dd></div>
+          <div><dt>Valor por número</dt><dd id="cartUnit">R$ 15,00</dd></div>
+          <div class="cart-total"><dt>Total</dt><dd id="cartTotal">R$ 0,00</dd></div>
+        </dl>
+
+        <div class="cart-actions">
+          <button type="button" id="checkoutBtn" class="btn btn-dark full-btn" disabled>Finalizar compra</button>
+          <a href="#numbersSection" id="keepShoppingBtn" class="btn btn-light full-btn">Continuar escolhendo</a>
+          <button type="button" id="clearCartBtn" class="btn-link" hidden>Esvaziar carrinho</button>
+        </div>
+      </aside>
+    </div>
+
+    <!-- Etapa 2: resumo + dados -->
+    <section id="checkoutView" class="card checkout hidden" aria-labelledby="checkoutTitle">
       <div class="section-top">
         <div>
-          <h2>Preencha seus dados</h2>
-          <p class="muted">Os números selecionados serão salvos no sistema.</p>
+          <h2 id="checkoutTitle">Resumo da compra</h2>
+          <p class="muted">Confira os números e preencha seus dados.</p>
         </div>
+      </div>
+
+      <div class="summary-box">
+        <div>
+          <small>Números escolhidos</small>
+          <div id="checkoutNumbers"></div>
+        </div>
+        <dl class="cart-summary">
+          <div><dt>Quantidade</dt><dd id="checkoutQty">0</dd></div>
+          <div><dt>Valor por número</dt><dd id="checkoutUnit">R$ 15,00</dd></div>
+          <div class="cart-total"><dt>Total</dt><dd id="checkoutTotal">R$ 0,00</dd></div>
+        </dl>
       </div>
 
       <form id="studentForm" class="form-grid">
         <div class="form-group">
-          <label for="studentName">Nome</label>
-          <input type="text" id="studentName" placeholder="Digite seu nome" required />
+          <label for="studentName">Nome completo</label>
+          <input type="text" id="studentName" placeholder="Digite seu nome" autocomplete="name" required />
         </div>
 
         <div class="form-group">
-          <label for="studentPhone">Telefone</label>
-          <input type="text" id="studentPhone" placeholder="Digite seu telefone" required />
-        </div>
-
-        <div class="form-group full-width">
-          <label>Números escolhidos</label>
-          <div id="selectedNumbersBox" class="empty-box">Nenhum número selecionado.</div>
+          <label for="studentPhone">Telefone (WhatsApp)</label>
+          <input type="tel" id="studentPhone" placeholder="(61) 90000-0000" autocomplete="tel" inputmode="tel" required />
         </div>
 
         <div class="form-group">
           <label for="studentReferral">Quem indicou / Vendedor</label>
-          <input type="text" id="studentReferral" placeholder="Quem indicou?" />
+          <input type="text" id="studentReferral" placeholder="Quem indicou? (opcional)" />
         </div>
 
+        <p class="full-width muted small-note">
+          Ao gerar o PIX, os números ficam reservados no seu nome por <strong id="reservationMinutes">60 minutos</strong>.
+          Sem pagamento nesse prazo, eles voltam a ficar disponíveis.
+        </p>
+
         <div class="full-width action-row">
-          <button type="button" id="clearSelectionBtn" class="btn btn-light">Limpar seleção</button>
-          <button type="submit" class="btn btn-dark">Salvar cadastro</button>
+          <button type="button" id="backToCartBtn" class="btn btn-light">Voltar ao carrinho</button>
+          <button type="submit" id="submitBtn" class="btn btn-dark">Reservar e gerar PIX</button>
         </div>
       </form>
 
-      <div id="studentMessage" class="message"></div>
+      <div id="studentMessage" class="message" role="status" aria-live="polite"></div>
+    </section>
+
+    <!-- Etapa 3: pagamento PIX -->
+    <section id="paymentView" class="card payment hidden" aria-labelledby="paymentTitle">
+      <div id="paymentPending">
+        <div class="payment-head">
+          <span class="badge gold" id="paymentStatusBadge">Aguardando pagamento</span>
+          <h2 id="paymentTitle">Pague com PIX</h2>
+          <p class="muted">Pedido <strong id="orderCode">—</strong></p>
+        </div>
+
+        <div class="payment-layout">
+          <div class="qr-area">
+            <div id="pixQr" class="qr-box" aria-label="QR Code PIX"></div>
+            <p class="pay-amount">Valor exato: <strong id="payAmount">R$ 0,00</strong></p>
+            <p class="countdown" id="countdown" aria-live="polite"></p>
+          </div>
+
+          <div class="pay-details">
+            <div id="pixCodeArea">
+              <label for="pixCode" class="pix-label">PIX copia e cola</label>
+              <textarea id="pixCode" class="pix-code" rows="4" readonly></textarea>
+              <button type="button" id="copyPixCodeBtn" class="btn btn-dark full-btn">Copiar código PIX</button>
+            </div>
+
+            <div id="pixKeyFallback" class="info-box hidden">
+              <small>Chave PIX (telefone)</small>
+              <div class="pix-row">
+                <strong id="pixKeyText" class="pix-key">(61) 99261-1326</strong>
+                <button type="button" id="copyPixKeyBtn" class="btn btn-light btn-sm">Copiar chave</button>
+              </div>
+            </div>
+
+            <ol class="pay-steps">
+              <li>Abra o app do seu banco e escolha <strong>PIX</strong>.</li>
+              <li>Leia o QR Code ou use o <strong>copia e cola</strong>.</li>
+              <li>Confira o valor de <strong id="payAmountStep">R$ 0,00</strong> e conclua.</li>
+              <li>Pronto. O responsável confirma o recebimento e seus números passam para <strong>vendido</strong>.</li>
+            </ol>
+
+            <dl class="cart-summary order-data">
+              <div><dt>Números</dt><dd id="payNumbers">—</dd></div>
+              <div><dt>Quantidade</dt><dd id="payQty">0</dd></div>
+              <div><dt>Nome</dt><dd id="payName">—</dd></div>
+              <div><dt>Telefone</dt><dd id="payPhone">—</dd></div>
+            </dl>
+          </div>
+        </div>
+      </div>
+
+      <div id="paymentDone" class="payment-result hidden">
+        <span class="badge green">Pagamento confirmado</span>
+        <h2>Números garantidos!</h2>
+        <p>Obrigado por ajudar na viagem. Seus números <strong id="doneNumbers"></strong> já estão como vendidos. Boa sorte!</p>
+      </div>
+
+      <div id="paymentExpired" class="payment-result hidden">
+        <span class="badge red">Prazo encerrado</span>
+        <h2>Reserva expirada</h2>
+        <p>O prazo de pagamento acabou e os números voltaram a ficar disponíveis. Se você já pagou, fale com o responsável pela rifa informando o pedido <strong id="expiredCode"></strong>.</p>
+      </div>
+
+      <div class="action-row payment-actions">
+        <button type="button" id="newOrderBtn" class="btn btn-light">Comprar mais números</button>
+      </div>
     </section>
   </main>
 
+  <div id="selectionBar" class="selection-bar hidden">
+    <div>
+      <span id="selectionBarCount">0 números</span><br />
+      <strong id="selectionBarTotal">R$ 0,00</strong>
+    </div>
+    <a href="#cartSection" class="btn btn-dark">Ver carrinho</a>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
   <script type="module" src="aluno.js"></script>
 </body>
 </html>

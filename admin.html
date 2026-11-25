@@ -2,26 +2,29 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Painel do Admin</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#0a0a0a" />
+  <title>Painel do Admin · Rifa São Francisco</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@1,700;1,800&family=Barlow:wght@400;600;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="style.css" />
 </head>
 <body class="admin-body">
   <main class="admin-page">
     <section id="loginScreen" class="login-card">
-      <span class="badge gold">Admin</span>
       <h1>Painel da Rifa</h1>
       <p class="muted">Entre com email e senha do administrador.</p>
 
       <form id="loginForm" class="form-grid login-grid">
         <div class="form-group">
           <label for="loginEmail">Email</label>
-          <input type="email" id="loginEmail" placeholder="admin@email.com" required />
+          <input type="email" id="loginEmail" placeholder="admin@email.com" autocomplete="username" required />
         </div>
 
         <div class="form-group">
           <label for="loginPassword">Senha</label>
-          <input type="password" id="loginPassword" placeholder="Digite sua senha" required />
+          <input type="password" id="loginPassword" placeholder="Digite sua senha" autocomplete="current-password" required />
         </div>
 
         <div class="full-width">
@@ -29,15 +32,16 @@
         </div>
       </form>
 
-      <div id="loginMessage" class="message"></div>
+      <div id="loginMessage" class="message" role="status" aria-live="polite"></div>
+
+      <p style="margin-top: 16px;"><a href="index.html" class="muted">← Voltar para a rifa</a></p>
     </section>
 
     <section id="adminApp" class="hidden">
       <header class="admin-header card">
         <div>
-          <span class="badge gold">Painel administrativo</span>
-          <h1>Organização da rifa</h1>
-          <p class="muted">Gerencie participantes, filtros, impressão e planilha.</p>
+          <h1>Rifa · São Francisco</h1>
+          <p class="muted">Gerencie reservas, pagamentos, filtros, impressão e planilha.</p>
         </div>
 
         <div class="header-actions">
@@ -46,18 +50,22 @@
         </div>
       </header>
 
-      <section class="stats-grid admin-stats">
+      <section class="stats-grid admin-stats" aria-label="Situação dos números">
         <div class="stat-card">
           <small>Total</small>
-          <strong id="adminTotal">200</strong>
+          <strong id="adminTotal">100</strong>
         </div>
-        <div class="stat-card">
+        <div class="stat-card available">
+          <small>Disponíveis</small>
+          <strong id="adminAvailable">100</strong>
+        </div>
+        <div class="stat-card reserved">
           <small>Reservados</small>
           <strong id="adminReserved">0</strong>
         </div>
-        <div class="stat-card dark">
-          <small>Disponíveis</small>
-          <strong id="adminAvailable">200</strong>
+        <div class="stat-card sold">
+          <small>Vendidos</small>
+          <strong id="adminSold">0</strong>
         </div>
       </section>
 
@@ -65,18 +73,48 @@
         <div class="section-top wrap">
           <div>
             <h2>Números da rifa</h2>
-            <p class="muted">Tabela visual dos 200 números.</p>
+            <p class="muted" id="gridDescription">Tabela visual dos 100 números.</p>
           </div>
 
           <div class="filters">
             <button class="btn btn-dark admin-filter active" data-filter="todos" type="button">Todos</button>
             <button class="btn btn-light admin-filter" data-filter="disponiveis" type="button">Disponíveis</button>
             <button class="btn btn-light admin-filter" data-filter="reservados" type="button">Reservados</button>
-            <button id="printFullGridBtn" class="btn btn-light" type="button">Imprimir 200 Números</button>
+            <button class="btn btn-light admin-filter" data-filter="vendidos" type="button">Vendidos</button>
+            <button id="printFullGridBtn" class="btn btn-light" type="button">Imprimir tabela</button>
           </div>
         </div>
 
+        <div class="legend">
+          <span><i class="legend-box available"></i> Disponível</span>
+          <span><i class="legend-box reserved"></i> Reservado</span>
+          <span><i class="legend-box sold"></i> Vendido (pago)</span>
+        </div>
+
         <div id="adminNumbersGrid" class="numbers-grid"></div>
+      </section>
+
+      <section class="card" id="ordersSection">
+        <div class="section-top wrap">
+          <div>
+            <h2>Pedidos</h2>
+            <p class="muted">Confirme pagamentos PIX, cancele reservas e consulte o histórico.</p>
+          </div>
+
+          <div class="filters" role="group" aria-label="Filtrar pedidos">
+            <button class="btn btn-dark order-tab active" data-status="todos" type="button">Todos <span data-count="todos">0</span></button>
+            <button class="btn btn-light order-tab" data-status="pendente" type="button">Aguardando <span data-count="pendente">0</span></button>
+            <button class="btn btn-light order-tab" data-status="pago" type="button">Pagos <span data-count="pago">0</span></button>
+            <button class="btn btn-light order-tab" data-status="cancelado" type="button">Cancelados / expirados <span data-count="cancelado">0</span></button>
+          </div>
+        </div>
+
+        <div class="order-totals">
+          <span>Recebido: <strong id="ordersPaidTotal">R$ 0,00</strong></span>
+          <span>A receber: <strong id="ordersPendingTotal">R$ 0,00</strong></span>
+        </div>
+
+        <div id="ordersList" class="participants-list"></div>
       </section>
 
       <section class="card">
@@ -88,17 +126,17 @@
         </div>
 
         <div class="toolbar">
-          <select id="orderFilter">
+          <select id="orderFilter" aria-label="Ordenação">
             <option value="numero_asc">Números crescentes</option>
             <option value="numero_desc">Números decrescentes</option>
             <option value="data_asc">Primeiras vendas</option>
             <option value="data_desc">Últimas vendas</option>
           </select>
 
-          <input type="date" id="dateFrom" />
-          <input type="date" id="dateTo" />
-          <input type="time" id="timeFrom" />
-          <input type="time" id="timeTo" />
+          <input type="date" id="dateFrom" aria-label="Data inicial" />
+          <input type="date" id="dateTo" aria-label="Data final" />
+          <input type="time" id="timeFrom" aria-label="Hora inicial" />
+          <input type="time" id="timeTo" aria-label="Hora final" />
 
           <button id="applyDateFilterBtn" class="btn btn-light" type="button">Aplicar período</button>
           <button id="clearDateFilterBtn" class="btn btn-light" type="button">Limpar período</button>
@@ -110,11 +148,11 @@
         <div class="section-top wrap">
           <div>
             <h2>Participantes</h2>
-            <p class="muted">Busque, organize, exporte e imprima.</p>
+            <p class="muted">Confirme pagamentos, busque, exporte e imprima.</p>
           </div>
 
           <div class="toolbar">
-            <input type="text" id="searchInput" placeholder="Buscar por nome, telefone, número ou indicação" />
+            <input type="text" id="searchInput" placeholder="Buscar por nome, telefone, número ou indicação" aria-label="Buscar participantes" />
             <button id="clearSearchBtn" class="btn btn-light" type="button">Limpar</button>
             <button id="printReservedBtn" class="btn btn-light" type="button">Imprimir Reservados</button>
             <button id="exportBtn" class="btn btn-green" type="button">Exportar Excel</button>
@@ -136,7 +174,53 @@
         <div id="rankingList" class="participants-list"></div>
       </section>
 
-      <div id="adminMessage" class="message"></div>
+      <section class="card" id="notificationsSection">
+        <div class="section-top wrap">
+          <div>
+            <h2>Notificações por WhatsApp</h2>
+            <p class="muted">Avisos automáticos enviados pelo backend (Cloud Functions) para o WhatsApp do responsável.</p>
+          </div>
+          <span id="integrationStatus" class="badge gold">Verificando...</span>
+        </div>
+
+        <form id="notificationSettingsForm" class="form-grid">
+          <div class="form-group">
+            <label for="adminPhoneInput">WhatsApp de destino (responsável)</label>
+            <input type="tel" id="adminPhoneInput" placeholder="+55 61 99261-1326" inputmode="tel" required />
+          </div>
+
+          <fieldset class="form-group full-width notify-types">
+            <legend>Enviar aviso quando houver</legend>
+            <div id="notificationTypes" class="checkbox-grid"></div>
+          </fieldset>
+
+          <div class="full-width action-row">
+            <button type="submit" class="btn btn-dark">Salvar configurações</button>
+            <button type="button" id="testWhatsAppBtn" class="btn btn-light">Enviar mensagem de teste</button>
+          </div>
+        </form>
+
+        <div id="notificationMessage" class="message" role="status" aria-live="polite"></div>
+
+        <h3 style="margin: 18px 0 10px;">Histórico de envios</h3>
+        <div id="notificationsList" class="participants-list"></div>
+      </section>
+
+      <section id="legacySection" class="card danger-zone hidden">
+        <div class="section-top wrap">
+          <div>
+            <h2>Limpeza: rifa anterior</h2>
+            <p class="muted" id="legacyInfo">Verificando dados antigos...</p>
+          </div>
+
+          <div class="toolbar">
+            <button id="legacyBackupBtn" class="btn btn-light" type="button">Baixar backup</button>
+            <button id="legacyDeleteBtn" class="btn btn-danger" type="button">Apagar rifa anterior</button>
+          </div>
+        </div>
+      </section>
+
+      <div id="adminMessage" class="message" role="status" aria-live="polite"></div>
     </section>
   </main>
 

@@ -3,14 +3,17 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Dashboard de Vendas</title>
+  <meta name="theme-color" content="#0a0a0a" />
+  <title>Dashboard de Vendas · Rifa São Francisco</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@1,700;1,800&family=Barlow:wght@400;600;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="style.css" />
 </head>
 <body class="admin-body">
   <main class="admin-page">
     <header class="admin-header card">
       <div>
-        <span class="badge gold">Dashboard</span>
         <h1>Dashboard de Vendas</h1>
         <p class="muted">Análise visual da rifa</p>
       </div>
@@ -23,15 +26,19 @@
     <section class="stats-grid admin-stats">
       <div class="stat-card">
         <small>Total de números</small>
-        <strong id="dashTotal">200</strong>
+        <strong id="dashTotal">100</strong>
       </div>
-      <div class="stat-card">
+      <div class="stat-card available">
+        <small>Disponíveis</small>
+        <strong id="dashAvailable">100</strong>
+      </div>
+      <div class="stat-card reserved">
         <small>Reservados</small>
         <strong id="dashReserved">0</strong>
       </div>
-      <div class="stat-card dark">
-        <small>Disponíveis</small>
-        <strong id="dashAvailable">200</strong>
+      <div class="stat-card sold">
+        <small>Vendidos</small>
+        <strong id="dashSold">0</strong>
       </div>
     </section>
 
@@ -44,7 +51,7 @@
       </div>
 
       <div class="toolbar">
-        <select id="orderFilter">
+        <select id="orderFilter" aria-label="Ordenação">
           <option value="numero_asc">Números crescentes</option>
           <option value="numero_desc">Números decrescentes</option>
           <option value="data_asc">Primeiras vendas</option>
@@ -102,7 +109,7 @@
     <div id="dashboardMessage" class="message"></div>
   </main>
 
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
   <script type="module" src="dashboard-page.js"></script>
 </body>
 </html>

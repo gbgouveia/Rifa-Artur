@@ -1,3 +1,15 @@
+// Paleta da arte: vermelho, branco, dourado e tons de cinza
+const PALETTE = ["#d50b0b", "#f5f5f5", "#f2b705", "#ff6b6b", "#8a8a8a", "#7a0606", "#d4d4d4", "#b38600"];
+const TEXT_COLOR = "#d4d4d4";
+const GRID_COLOR = "#2e2e2e";
+
+function applyChartTheme() {
+  if (!window.Chart) return;
+  Chart.defaults.color = TEXT_COLOR;
+  Chart.defaults.borderColor = GRID_COLOR;
+  Chart.defaults.font.family = "Barlow, Arial, sans-serif";
+}
+
 let rankingChart = null;
 let timelineChart = null;
 let pieChart = null;
@@ -54,6 +66,8 @@ export function buildDashboard(participants) {
   const timelineLabels = Object.keys(timelineMap);
   const timelineData = Object.values(timelineMap);
 
+  applyChartTheme();
+
   if (rankingChart) rankingChart.destroy();
   if (timelineChart) timelineChart.destroy();
   if (pieChart) pieChart.destroy();
@@ -66,7 +80,8 @@ export function buildDashboard(participants) {
         {
           label: "Vendas",
           data: rankingData,
-          borderWidth: 1
+          backgroundColor: "#d50b0b",
+          borderRadius: 6
         }
       ]
     },
@@ -84,6 +99,9 @@ export function buildDashboard(participants) {
         {
           label: "Vendas por dia",
           data: timelineData,
+          borderColor: "#d50b0b",
+          backgroundColor: "#d50b0b",
+          pointBackgroundColor: "#f5f5f5",
           fill: false,
           tension: 0.2
         }
@@ -101,7 +119,10 @@ export function buildDashboard(participants) {
       labels: rankingLabels,
       datasets: [
         {
-          data: rankingData
+          data: rankingData,
+          backgroundColor: rankingLabels.map((_, index) => PALETTE[index % PALETTE.length]),
+          borderColor: "#0a0a0a",
+          borderWidth: 2
         }
       ]
     },
